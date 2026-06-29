@@ -33,7 +33,11 @@ public class AtsJsonParser {
             Map.entry("linkedin_url", "links.linkedin"),
             Map.entry("github_url", "links.github"),
             Map.entry("location_city", "location.city"),
-            Map.entry("location_country", "location.country")
+            Map.entry("location_country", "location.country"),
+            Map.entry("institution", "education.institution"),
+            Map.entry("degree", "education.degree"),
+            Map.entry("field_of_study", "education.field"),
+            Map.entry("graduation_year", "education.endYear")
     );
 
     private final ObjectMapper objectMapper = new ObjectMapper();

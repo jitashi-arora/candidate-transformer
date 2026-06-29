@@ -2,12 +2,16 @@ package com.eightfold.transformer.pipeline;
 
 import com.eightfold.transformer.model.*;
 import com.eightfold.transformer.util.CandidateIdUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
 
 @Component
 public class Merger {
+
+    private static final Logger log = LoggerFactory.getLogger(Merger.class);
 
     // Higher index = higher priority
     private static final List<String> SOURCE_PRIORITY =
@@ -63,12 +67,14 @@ public class Merger {
 
             setIfBetter(canonical, "fullName", raw, fields.get("fullName"), provenance);
             setIfBetter(canonical, "headline", raw, fields.get("headline"), provenance);
+            setIfBetter(canonical, "yearsExperience", raw, fields.get("yearsExperience"), provenance);
 
             collectEmails(fields.get("emails"), emailSet);
             collectPhones(fields.get("phones"), phoneSet);
             collectSkills(fields.get("skills_raw"), raw.getSourceName(), skillMap);
 
             buildExperience(canonical, fields, raw.getSourceName(), provenance);
+            buildEducation(canonical, fields, raw.getSourceName(), provenance);
             buildLinks(canonical, fields, raw.getSourceName(), provenance);
             buildLocation(canonical, fields, raw.getSourceName(), provenance);
         }
@@ -109,6 +115,14 @@ public class Merger {
                 canonical.setHeadline(value);
                 provenance.add(new ProvenanceEntry("headline", raw.getSourceName(), field.getMethod()));
             }
+            case "yearsExperience" -> {
+                try {
+                    canonical.setYearsExperience(Double.parseDouble(value));
+                    provenance.add(new ProvenanceEntry("years_experience", raw.getSourceName(), field.getMethod()));
+                } catch (NumberFormatException e) {
+                    log.warn("Merger: could not parse yearsExperience '{}' from {}", value, raw.getSourceName());
+                }
+            }
         }
     }
 
@@ -131,7 +145,7 @@ public class Merger {
     private void collectSkills(RawField field, String sourceName, Map<String, Skill> skillMap) {
         if (field == null || !(field.getValue() instanceof List<?>)) return;
         for (Object item : (List<?>) field.getValue()) {
-            String skillName = item.toString().trim();
+            String skillName = Normalizer.canonicalizeSkill(item.toString().trim());
             String key = skillName.toLowerCase();
             if (skillMap.containsKey(key)) {
                 // Already seen — add source to list
@@ -167,6 +181,37 @@ public class Merger {
 
         existing.add(new Experience(company, title));
         provenance.add(new ProvenanceEntry("experience", sourceName, "direct"));
+    }
+
+    private void buildEducation(CanonicalCandidate canonical, Map<String, RawField> fields,
+                                String sourceName, List<ProvenanceEntry> provenance) {
+        RawField instField = fields.get("education.institution");
+        RawField degreeField = fields.get("education.degree");
+        RawField fieldField = fields.get("education.field");
+        RawField yearField = fields.get("education.endYear");
+
+        if (instField == null && degreeField == null) return;
+
+        String institution = instField != null ? instField.getValue().toString() : null;
+
+        // Deduplicate by institution name
+        List<Education> existing = canonical.getEducation();
+        boolean alreadyPresent = existing.stream().anyMatch(e ->
+                institution != null && institution.equalsIgnoreCase(e.getInstitution()));
+        if (alreadyPresent) return;
+
+        Education edu = new Education();
+        edu.setInstitution(institution);
+        if (degreeField != null) edu.setDegree(degreeField.getValue().toString());
+        if (fieldField != null) edu.setField(fieldField.getValue().toString());
+        if (yearField != null) {
+            try {
+                edu.setEndYear(Integer.parseInt(yearField.getValue().toString()));
+            } catch (NumberFormatException ignored) {}
+        }
+
+        existing.add(edu);
+        provenance.add(new ProvenanceEntry("education", sourceName, "direct"));
     }
 
     private void buildLinks(CanonicalCandidate canonical, Map<String, RawField> fields,

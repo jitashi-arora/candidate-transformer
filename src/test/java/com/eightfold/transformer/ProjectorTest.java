@@ -2,6 +2,8 @@ package com.eightfold.transformer;
 
 import com.eightfold.transformer.model.*;
 import com.eightfold.transformer.pipeline.Projector;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -11,7 +13,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ProjectorTest {
 
-    private final Projector projector = new Projector();
+    private static ObjectMapper snakeCaseMapper() {
+        ObjectMapper om = new ObjectMapper();
+        om.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+        return om;
+    }
+
+    private final Projector projector = new Projector(snakeCaseMapper());
 
     private CanonicalCandidate makeCandidate() {
         CanonicalCandidate c = new CanonicalCandidate();
@@ -31,7 +39,7 @@ class ProjectorTest {
     void nullConfigReturnsFullProfile() {
         CanonicalCandidate c = makeCandidate();
         Map<String, Object> result = projector.project(c, null);
-        assertEquals("Alice Smith", result.get("fullName"));
+        assertEquals("Alice Smith", result.get("full_name"));
     }
 
     @Test

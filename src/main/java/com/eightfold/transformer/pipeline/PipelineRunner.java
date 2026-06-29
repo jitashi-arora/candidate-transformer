@@ -28,17 +28,19 @@ public class PipelineRunner {
     private final NotesParser notesParser;
     private final Merger merger;
     private final Scorer scorer;
+    private final Validator validator;
     private final Projector projector;
 
     public PipelineRunner(CsvParser csvParser, AtsJsonParser atsJsonParser,
                           GitHubParser gitHubParser, NotesParser notesParser,
-                          Merger merger, Scorer scorer, Projector projector) {
+                          Merger merger, Scorer scorer, Validator validator, Projector projector) {
         this.csvParser = csvParser;
         this.atsJsonParser = atsJsonParser;
         this.gitHubParser = gitHubParser;
         this.notesParser = notesParser;
         this.merger = merger;
         this.scorer = scorer;
+        this.validator = validator;
         this.projector = projector;
     }
 
@@ -72,7 +74,10 @@ public class PipelineRunner {
         // 3. Score each candidate
         canonical.forEach(scorer::score);
 
-        // 4. Project using config and return
+        // 4. Validate each candidate before projecting
+        canonical.forEach(validator::validate);
+
+        // 5. Project using config and return
         return canonical.stream()
                 .map(c -> projector.project(c, config))
                 .toList();

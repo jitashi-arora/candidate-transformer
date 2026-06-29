@@ -8,7 +8,9 @@
     "linkedin_url": "https://linkedin.com/in/alicesmith",
     "location_city": "San Francisco",
     "location_country": "United States",
-    "years_at_company": 3
+    "institution": "MIT",
+    "degree": "B.S. Computer Science",
+    "graduation_year": 2019
   },
   {
     "candidate_name": "Bob Jones",
@@ -19,6 +21,9 @@
     "linkedin_url": "https://linkedin.com/in/bobjones",
     "github_url": "https://github.com/bobjones",
     "location_city": "New York",
-    "location_country": "US"
+    "location_country": "US",
+    "institution": "Stanford University",
+    "degree": "B.S. Management Science",
+    "graduation_year": 2018
   }
 ]

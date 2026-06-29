@@ -20,6 +20,29 @@ public class Normalizer {
     private static final Pattern EMAIL_PATTERN =
             Pattern.compile("^[\\w.+\\-]+@[\\w\\-]+\\.[\\w.]+$");
 
+    // Known skill aliases → canonical form
+    private static final Map<String, String> SKILL_ALIASES = Map.ofEntries(
+            Map.entry("js", "JavaScript"),
+            Map.entry("javascript", "JavaScript"),
+            Map.entry("ts", "TypeScript"),
+            Map.entry("typescript", "TypeScript"),
+            Map.entry("k8s", "Kubernetes"),
+            Map.entry("kubernetes", "Kubernetes"),
+            Map.entry("ml", "Machine Learning"),
+            Map.entry("aws", "AWS"),
+            Map.entry("gcp", "GCP"),
+            Map.entry("sql", "SQL"),
+            Map.entry("html", "HTML"),
+            Map.entry("css", "CSS"),
+            Map.entry("api", "API"),
+            Map.entry("rest", "REST"),
+            Map.entry("ci/cd", "CI/CD"),
+            Map.entry("node.js", "Node.js"),
+            Map.entry("nodejs", "Node.js"),
+            Map.entry("python", "Python"),
+            Map.entry("java", "Java")
+    );
+
     // Simple country name → ISO alpha-2 map for common cases
     private static final Map<String, String> COUNTRY_MAP = Map.ofEntries(
             Map.entry("united states", "US"),
@@ -95,6 +118,23 @@ public class Normalizer {
         }
 
         return Optional.empty();
+    }
+
+    public static String canonicalizeSkill(String raw) {
+        if (raw == null || raw.isBlank()) return raw;
+        String trimmed = raw.strip();
+        String aliased = SKILL_ALIASES.get(trimmed.toLowerCase());
+        if (aliased != null) return aliased;
+        // Title-case each word for consistency
+        String[] words = trimmed.split("\\s+");
+        StringBuilder sb = new StringBuilder();
+        for (String word : words) {
+            if (sb.length() > 0) sb.append(" ");
+            if (word.isEmpty()) continue;
+            sb.append(Character.toUpperCase(word.charAt(0)));
+            if (word.length() > 1) sb.append(word.substring(1).toLowerCase());
+        }
+        return sb.isEmpty() ? trimmed : sb.toString();
     }
 
     public static Optional<String> normalizeCountry(String raw) {

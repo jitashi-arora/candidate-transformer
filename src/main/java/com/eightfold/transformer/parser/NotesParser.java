@@ -30,6 +30,10 @@ public class NotesParser {
             Pattern.compile("(?i)skills\\s*:\\s*(.+)");
     private static final Pattern NAME_PATTERN =
             Pattern.compile("^([A-Z][a-z]+( [A-Z][a-z]+)+)");
+    private static final Pattern YEARS_EXP_PATTERN =
+            Pattern.compile("(?i)(\\d+)\\s+years?(?:\\s+of(?:\\s+\\w+)*)?\\s+(?:experience|exp)");
+    private static final Pattern EDUCATION_PATTERN =
+            Pattern.compile("(?i)Education\\s*:\\s*([^,]+),\\s*([^,]+),\\s*(\\d{4})");
 
     public RawCandidate parse(InputStream inputStream, String fileName) {
         if (inputStream == null) return null;
@@ -75,6 +79,20 @@ public class NotesParser {
         Matcher nameMatcher = NAME_PATTERN.matcher(firstLine);
         if (nameMatcher.find()) {
             candidate.addField("fullName", new RawField(nameMatcher.group(1), CONFIDENCE, "regex"));
+        }
+
+        // Extract years of experience
+        Matcher yearsExpMatcher = YEARS_EXP_PATTERN.matcher(text);
+        if (yearsExpMatcher.find()) {
+            candidate.addField("yearsExperience", new RawField(yearsExpMatcher.group(1), CONFIDENCE, "regex"));
+        }
+
+        // Extract education from "Education: institution, degree, year" line
+        Matcher educationMatcher = EDUCATION_PATTERN.matcher(text);
+        if (educationMatcher.find()) {
+            candidate.addField("education.institution", new RawField(educationMatcher.group(1).trim(), CONFIDENCE, "regex"));
+            candidate.addField("education.degree", new RawField(educationMatcher.group(2).trim(), CONFIDENCE, "regex"));
+            candidate.addField("education.endYear", new RawField(educationMatcher.group(3).trim(), CONFIDENCE, "regex"));
         }
 
         return candidate;

@@ -2,6 +2,7 @@ Alice Smith
 Spoke with Alice on June 20th. Strong Python and Java background with great system design instincts.
 Has 5 years of experience in distributed systems. Currently at Acme Corp.
 Skills: Python, Java, SQL, Kubernetes, Distributed Systems
+Education: MIT, B.S. Computer Science, 2019
 Email: alice@example.com
 Phone: (408) 867-0001
 Very strong communicator, recommended for next round.

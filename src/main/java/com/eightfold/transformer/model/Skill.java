@@ -7,6 +7,8 @@ public class Skill {
     private double confidence;
     private List<String> sources; // which source names contributed this skill
 
+    public Skill() {}
+
     public Skill(String name, double confidence, List<String> sources) {
         this.name = name;
         this.confidence = confidence;
