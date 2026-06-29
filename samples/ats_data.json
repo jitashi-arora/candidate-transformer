@@ -1,0 +1,24 @@
+[
+  {
+    "candidate_name": "Alice Smith",
+    "contact_email": "alice@example.com",
+    "mobile": "+1 408-867-0001",
+    "current_role": "Senior Software Engineer",
+    "current_company": "Acme Corp",
+    "linkedin_url": "https://linkedin.com/in/alicesmith",
+    "location_city": "San Francisco",
+    "location_country": "United States",
+    "years_at_company": 3
+  },
+  {
+    "candidate_name": "Bob Jones",
+    "email_address": "bob@example.com",
+    "phone_number": "415-867-0002",
+    "position_title": "Senior Product Manager",
+    "current_company": "TechCo",
+    "linkedin_url": "https://linkedin.com/in/bobjones",
+    "github_url": "https://github.com/bobjones",
+    "location_city": "New York",
+    "location_country": "US"
+  }
+]

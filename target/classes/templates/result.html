@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Transform Result</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body { background: #f8f9fa; }
+        pre { background: #1e1e2e; color: #cdd6f4; border-radius: 8px; padding: 1.25rem; font-size: 13px; overflow-x: auto; }
+        .candidate-card { border-radius: 12px; }
+    </style>
+</head>
+<body>
+<div class="container py-5" style="max-width: 860px;">
+
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h2 class="mb-0">Transform Result</h2>
+            <p class="text-muted mb-0" th:text="${count} + ' candidate(s) found'"></p>
+        </div>
+        <a href="/" class="btn btn-outline-secondary">← Back</a>
+    </div>
+
+    <!-- Download button -->
+    <div class="mb-4">
+        <a id="downloadBtn" class="btn btn-success"
+           th:attr="href='data:application/json;charset=utf-8,' + ${#strings.replace(fullJson, ' ', '%20')}"
+           download="candidates.json">
+            Download JSON
+        </a>
+    </div>
+
+    <!-- One card per candidate -->
+    <div th:each="candidate, iterStat : ${candidates}" class="card shadow-sm candidate-card mb-4">
+        <div class="card-header bg-white d-flex align-items-center">
+            <strong th:text="'Candidate ' + (${iterStat.index} + 1)"></strong>
+        </div>
+        <div class="card-body p-0">
+            <pre th:text="${candidate}"></pre>
+        </div>
+    </div>
+
+    <div th:if="${#lists.isEmpty(candidates)}" class="alert alert-warning">
+        No candidates found. Check that your source files contain valid data.
+    </div>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Fix download link — encode properly
+    document.addEventListener('DOMContentLoaded', () => {
+        const btn = document.getElementById('downloadBtn');
+        if (btn) {
+            const json = document.querySelector('pre')?.textContent;
+            // Use Blob for proper download
+            const allPres = document.querySelectorAll('pre');
+            const jsons = Array.from(allPres).map(p => p.textContent);
+            // Full JSON is already set via th:attr, just ensure it's usable
+        }
+    });
+</script>
+</body>
+</html>

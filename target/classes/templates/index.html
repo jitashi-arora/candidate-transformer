@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Candidate Data Transformer</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body { background: #f8f9fa; }
+        .card { border-radius: 12px; }
+        textarea { font-family: monospace; font-size: 13px; }
+    </style>
+</head>
+<body>
+<div class="container py-5" style="max-width: 720px;">
+    <div class="card shadow-sm p-4">
+        <h2 class="mb-1">Candidate Data Transformer</h2>
+        <p class="text-muted mb-4">Upload source files to build a unified candidate profile.</p>
+
+        <form method="post" action="/transform" enctype="multipart/form-data">
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Recruiter CSV</label>
+                <input type="file" class="form-control" name="csvFile" accept=".csv">
+                <div class="form-text">Columns: name, email, phone, current_company, title</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">ATS JSON</label>
+                <input type="file" class="form-control" name="atsJsonFile" accept=".json">
+                <div class="form-text">Array of candidate objects with ATS field names</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Recruiter Notes (.txt)</label>
+                <input type="file" class="form-control" name="notesFile" accept=".txt">
+                <div class="form-text">Free-text notes — email, phone, and Skills: line are extracted</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">GitHub Profile URL</label>
+                <input type="text" class="form-control" name="githubUrl"
+                       placeholder="https://github.com/username">
+            </div>
+
+            <hr class="my-4">
+
+            <div class="mb-4">
+                <label class="form-label fw-semibold">Output Config <span class="text-muted fw-normal">(optional)</span></label>
+                <textarea class="form-control" name="configJson" rows="8"
+                          th:text="${defaultConfig}"></textarea>
+                <div class="form-text">
+                    Leave as-is for full output. Set <code>fields</code> array to select/rename fields.
+                    <a href="#" data-bs-toggle="collapse" data-bs-target="#configHelp">Show example</a>
+                </div>
+                <div class="collapse mt-2" id="configHelp">
+                    <pre class="bg-light p-3 rounded" style="font-size:12px;">{
+  "fields": [
+    {"path": "full_name", "from": "fullName", "required": true},
+    {"path": "primary_email", "from": "emails[0]", "required": true},
+    {"path": "phone", "from": "phones[0]"},
+    {"path": "skill_names", "from": "skills[].name"}
+  ],
+  "include_confidence": true,
+  "include_provenance": false,
+  "on_missing": "null"
+}</pre>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Transform</button>
+        </form>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

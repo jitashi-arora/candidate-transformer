@@ -1,0 +1,5 @@
+com/eightfold/transformer/ProjectorTest.class
+com/eightfold/transformer/MergerTest.class
+com/eightfold/transformer/CsvParserTest.class
+com/eightfold/transformer/AtsJsonParserTest.class
+com/eightfold/transformer/NormalizerTest.class
