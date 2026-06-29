@@ -1,0 +1,8 @@
+David Chen
+David is a strong backend engineer with 3 years of experience at GlobalTech. Solid systems thinking and fast learner.
+Has 3 years of experience in distributed backend systems. Currently based in Toronto.
+Skills: Go, Docker, k8s, PostgreSQL, REST, Python
+Education: University of Toronto, B.Eng. Computer Engineering, 2021
+Email: david.chen@example.com
+Phone: (510) 867-0003
+Good cultural fit, technically sharp. Recommend for technical round.

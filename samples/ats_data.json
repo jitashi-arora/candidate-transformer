@@ -25,5 +25,32 @@
     "institution": "Stanford University",
     "degree": "B.S. Management Science",
     "graduation_year": 2018
+  },
+  {
+    "candidate_name": "David Chen",
+    "contact_email": "david.chen@example.com",
+    "phone_number": "510-867-0003",
+    "current_role": "Senior Backend Engineer",
+    "current_company": "GlobalTech",
+    "github_url": "https://github.com/davidchen",
+    "location_city": "Toronto",
+    "location_country": "Canada",
+    "institution": "University of Toronto",
+    "degree": "B.Eng. Computer Engineering",
+    "graduation_year": 2021
+  },
+  {
+    "candidate_name": "Emma Wilson",
+    "email_address": "emma.wilson@example.com",
+    "mobile": "+1 650-867-0004",
+    "position_title": "Senior Data Scientist",
+    "current_company": "DataCo",
+    "linkedin_url": "https://linkedin.com/in/emmawilson",
+    "location_city": "Austin",
+    "location_country": "United States",
+    "institution": "UC Berkeley",
+    "degree": "M.S. Statistics",
+    "field_of_study": "Machine Learning",
+    "graduation_year": 2020
   }
 ]

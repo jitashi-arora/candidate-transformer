@@ -2,3 +2,5 @@ name,email,phone,current_company,title
 Alice Smith,alice@example.com,+14088670001,Acme Corp,Senior Engineer
 Bob Jones,bob@example.com,(415) 867-0002,TechCo,Product Manager
 Carol Davis,,867-0003,,
+David Chen,david.chen@example.com,+15108670003,GlobalTech,Backend Engineer
+Emma Wilson,emma.wilson@example.com,+16508670004,DataCo,Data Scientist
