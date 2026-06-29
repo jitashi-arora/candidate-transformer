@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Multi-Source Candidate Data Transformer — Technical Design</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 9.5pt;
+    line-height: 1.45;
+    color: #1a1a1a;
+    background: #fff;
+    padding: 18mm 18mm 14mm 18mm;
+  }
+
+  /* ---- Header ---- */
+  header {
+    border-bottom: 2.5px solid #2563eb;
+    padding-bottom: 6px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  header h1 {
+    font-size: 14pt;
+    font-weight: 700;
+    color: #1e3a5f;
+    letter-spacing: -0.3px;
+  }
+  header span {
+    font-size: 8pt;
+    color: #555;
+  }
+
+  /* ---- Two-column grid ---- */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 16px;
+  }
+
+  /* ---- Section cards ---- */
+  .card {
+    background: #f8fafc;
+    border: 1px solid #dde3ec;
+    border-radius: 5px;
+    padding: 8px 10px;
+  }
+  .card.full { grid-column: 1 / -1; }
+  .card h2 {
+    font-size: 8pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #2563eb;
+    margin-bottom: 6px;
+    border-bottom: 1px solid #dde3ec;
+    padding-bottom: 3px;
+  }
+
+  /* ---- Pipeline ---- */
+  .pipeline {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2px;
+    margin-bottom: 6px;
+  }
+  .step {
+    background: #2563eb;
+    color: #fff;
+    font-size: 7.5pt;
+    font-weight: 600;
+    padding: 3px 7px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .arrow { color: #94a3b8; font-size: 10pt; font-weight: 300; }
+  .pipe-desc {
+    font-size: 8pt;
+    color: #444;
+  }
+  .pipe-desc span { color: #2563eb; font-weight: 600; }
+
+  /* ---- Tables ---- */
+  table { width: 100%; border-collapse: collapse; font-size: 8pt; }
+  th {
+    background: #e8edf5;
+    color: #1e3a5f;
+    font-weight: 700;
+    text-align: left;
+    padding: 3px 6px;
+    font-size: 7.5pt;
+  }
+  td { padding: 2.5px 6px; border-bottom: 1px solid #edf0f4; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .mono { font-family: 'Consolas', 'Courier New', monospace; color: #1e40af; font-size: 8pt; }
+
+  /* ---- Lists ---- */
+  ul { padding-left: 14px; }
+  li { margin-bottom: 2px; font-size: 8.5pt; }
+  li strong { color: #1e3a5f; }
+
+  /* ---- Footer ---- */
+  footer {
+    margin-top: 10px;
+    border-top: 1px solid #dde3ec;
+    padding-top: 5px;
+    font-size: 7.5pt;
+    color: #666;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  @media print {
+    body { padding: 12mm 15mm 10mm 15mm; }
+    @page { size: A4; margin: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Multi-Source Candidate Data Transformer &mdash; Technical Design</h1>
+  <span>Java 21 &nbsp;|&nbsp; Spring Boot 3.3 &nbsp;|&nbsp; Eightfold Engineering Intern Assignment</span>
+</header>
+
+<div class="grid">
+
+  <!-- ① Pipeline -->
+  <div class="card full">
+    <h2>① Pipeline Breakdown</h2>
+    <div class="pipeline">
+      <span class="step">Parse</span><span class="arrow">→</span>
+      <span class="step">Normalize</span><span class="arrow">→</span>
+      <span class="step">Merge</span><span class="arrow">→</span>
+      <span class="step">Score</span><span class="arrow">→</span>
+      <span class="step">Validate</span><span class="arrow">→</span>
+      <span class="step">Project</span><span class="arrow">→</span>
+      <span class="step">Render</span>
+    </div>
+    <p class="pipe-desc">
+      <span>Parse</span> — four independent parsers (CSV, ATS JSON, GitHub REST API, recruiter notes TXT) each produce a
+      <em>RawCandidate</em> with a confidence score and extraction method per field. Parser failures are caught and logged; the pipeline never crashes on a single bad source. &nbsp;
+      <span>Normalize</span> — phones → E.164, emails → lowercase, dates → YYYY-MM, countries → ISO-3166 alpha-2; unknown values stored as null, never guessed. &nbsp;
+      <span>Merge</span> — group by primary email; source priority resolves scalar conflicts; lists are unioned. &nbsp;
+      <span>Score</span> — per-field confidence averaged to overall_confidence; +0.05 boost when ≥2 sources agree. &nbsp;
+      <span>Validate</span> — checks candidate_id, email presence, full_name, confidence in [0,1]; logs warnings. &nbsp;
+      <span>Project</span> — runtime config reshapes output without mutating the canonical record.
+    </p>
+  </div>
+
+  <!-- ② Canonical schema + formats -->
+  <div class="card">
+    <h2>② Canonical Output Schema &amp; Formats</h2>
+    <table>
+      <tr><th>Field</th><th>Type / Format</th></tr>
+      <tr><td><span class="mono">candidate_id</span></td><td>SHA-256(email)[:16] hex — deterministic</td></tr>
+      <tr><td><span class="mono">full_name</span></td><td>string</td></tr>
+      <tr><td><span class="mono">emails</span></td><td>string[] — lowercase</td></tr>
+      <tr><td><span class="mono">phones</span></td><td>string[] — E.164 e.g. <span class="mono">+14088670001</span></td></tr>
+      <tr><td><span class="mono">location</span></td><td>city, region, country (ISO alpha-2 e.g. <span class="mono">US</span>)</td></tr>
+      <tr><td><span class="mono">links</span></td><td>linkedin, github, portfolio</td></tr>
+      <tr><td><span class="mono">years_experience</span></td><td>number | null</td></tr>
+      <tr><td><span class="mono">skills</span></td><td>[{name, confidence, sources[]}]</td></tr>
+      <tr><td><span class="mono">experience</span></td><td>[{company, title, start, end}] — dates YYYY-MM</td></tr>
+      <tr><td><span class="mono">education</span></td><td>[{institution, degree, field, end_year}]</td></tr>
+      <tr><td><span class="mono">provenance</span></td><td>[{field, source, method}]</td></tr>
+      <tr><td><span class="mono">overall_confidence</span></td><td>float [0.0 – 1.0]</td></tr>
+    </table>
+  </div>
+
+  <!-- ③ Merge & conflict resolution -->
+  <div class="card">
+    <h2>③ Merge &amp; Conflict Resolution</h2>
+    <ul>
+      <li><strong>Identity key:</strong> normalized primary email. No email → isolated UUID group.</li>
+      <li><strong>Source priority (low → high):</strong> recruiter_notes &lt; ats_json &lt; recruiter_csv &lt; github</li>
+      <li><strong>Scalar fields</strong> (name, headline, title): highest-priority source with a non-blank value wins. Sources processed in ascending priority order so the last write wins.</li>
+      <li><strong>List fields</strong> (emails, phones): union across all sources, deduplicated after normalization.</li>
+      <li><strong>Skills:</strong> deduplicated by lowercase canonical name. If the same skill appears in ≥2 sources, it receives a +0.05 confidence boost (capped at 1.0).</li>
+      <li><strong>Experience:</strong> deduplicated by company name (case-insensitive); higher-priority title replaces lower-priority one.</li>
+      <li><strong>Education:</strong> deduplicated by institution name.</li>
+    </ul>
+  </div>
+
+  <!-- ④ Runtime config -->
+  <div class="card">
+    <h2>④ Runtime Config — Projection Layer</h2>
+    <ul>
+      <li><strong>Core pipeline is config-unaware.</strong> It always produces the full CanonicalCandidate. The Projector reads the config and builds a new Map — the canonical record is never mutated.</li>
+      <li><strong>Field selection:</strong> <span class="mono">fields[]</span> lists output keys. Omit entirely for the full profile.</li>
+      <li><strong>Rename / remap:</strong> <span class="mono">from</span> sets the source path; <span class="mono">path</span> sets the output key name.</li>
+      <li><strong>Path expressions:</strong> direct field (<span class="mono">full_name</span>), list index (<span class="mono">emails[0]</span>), sub-field of every element (<span class="mono">skills[].name</span>).</li>
+      <li><strong>On missing:</strong> <span class="mono">"null"</span> outputs null, <span class="mono">"omit"</span> skips the key, <span class="mono">"error"</span> throws if required.</li>
+      <li><strong>Toggles:</strong> <span class="mono">include_confidence</span>, <span class="mono">include_provenance</span> (both default true).</li>
+      <li><strong>Per-field normalize:</strong> optional pass — email, phone, date, country, skill aliases.</li>
+    </ul>
+  </div>
+
+  <!-- ⑤ Edge cases -->
+  <div class="card">
+    <h2>⑤ Edge Cases</h2>
+    <table>
+      <tr><th>Case</th><th>Handling</th></tr>
+      <tr>
+        <td>Candidate with no email (e.g. Carol in CSV)</td>
+        <td>Assigned a UUID group key so the record is not lost and is not falsely merged with anyone else.</td>
+      </tr>
+      <tr>
+        <td>Invalid / fictional phone number</td>
+        <td>libphonenumber rejects it; stored as <span class="mono">null</span>. Downstream consumers can trust every non-null phone is valid E.164.</td>
+      </tr>
+      <tr>
+        <td>Same candidate with different titles across sources</td>
+        <td>Source priority order ensures the highest-reliability source (GitHub &gt; CSV &gt; ATS &gt; notes) wins. No data is discarded — provenance records all sources.</td>
+      </tr>
+      <tr>
+        <td>Country as free text ("United States", "canada", "US")</td>
+        <td>Static lookup map normalizes all variants to ISO alpha-2. Unrecognized values are stored as-is rather than dropped.</td>
+      </tr>
+      <tr>
+        <td>Skill aliases (k8s, js, ml, nodejs)</td>
+        <td>canonicalizeSkill() maps aliases before deduplication so "k8s" and "Kubernetes" count as the same skill and correctly boost each other's confidence.</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ⑥ Deliberately left out -->
+  <div class="card">
+    <h2>⑥ Deliberately Left Out</h2>
+    <ul>
+      <li><strong>LinkedIn source</strong> — requires OAuth 2.0 flow; not feasible within time constraints. Noted in README.</li>
+      <li><strong>PDF / DOCX resume parsing</strong> — needs a dedicated extraction library; complex and out of scope for this assignment.</li>
+      <li><strong>Fuzzy name-based identity matching</strong> — high false-positive risk (e.g. "John Smith"). Email is a reliable unique key; name matching is explicitly excluded.</li>
+      <li><strong>GitHub personal access token</strong> — 60 unauthenticated requests per hour is sufficient for a demo. Token management adds complexity with no benefit here.</li>
+      <li><strong>Async / streaming processing</strong> — a synchronous single-threaded pipeline is correct, simple, and testable at this scale. Async would add complexity for no observable benefit.</li>
+    </ul>
+  </div>
+
+</div>
+
+<footer>
+  <span>github.com/jitashi-arora/candidate-transformer</span>
+  <span>Stack: Java 21 &middot; Spring Boot 3.3 &middot; Apache Commons CSV &middot; Google libphonenumber &middot; Jackson &middot; Thymeleaf</span>
+</footer>
+
+</body>
+</html>
